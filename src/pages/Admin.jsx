@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import { useAdmin } from '../context/AdminContext'
 
 const USERNAME = 'admin'
@@ -9,24 +10,32 @@ const isAuthed  = () => sessionStorage.getItem('aj_auth') === 'true'
 const setAuthed = () => sessionStorage.setItem('aj_auth', 'true')
 const clearAuth = () => sessionStorage.removeItem('aj_auth')
 
-// ─── Image input: file upload (→ base64) or manual URL/path ─────────────────
+// ── Image input: file → Supabase Storage, or manual URL/path ────────────────
 function ImageInput({ value, onChange, label = 'Image' }) {
-  const handleFile = (e) => {
+  const [uploading, setUploading] = useState(false)
+
+  const handleFile = async (e) => {
     const file = e.target.files[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onloadend = () => onChange(reader.result)
-    reader.readAsDataURL(file)
+    setUploading(true)
+    const ext = file.name.split('.').pop()
+    const path = `${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('images').upload(path, file)
+    if (error) { alert('Upload failed: ' + error.message); setUploading(false); return }
+    const { data } = supabase.storage.from('images').getPublicUrl(path)
+    onChange(data.publicUrl)
+    setUploading(false)
   }
-  const isBase64 = value?.startsWith('data:')
+
   return (
     <div className="image-input-group">
       <label>{label}</label>
-      <input type="file" accept="image/*" onChange={handleFile} />
+      <input type="file" accept="image/*" onChange={handleFile} disabled={uploading} />
+      {uploading && <span style={{ color: '#666', fontSize: '0.9rem' }}>Uploading…</span>}
       <input
         type="text"
         placeholder="Or paste image URL / path (e.g. /images/photo.jpg)"
-        value={isBase64 ? '' : (value || '')}
+        value={value || ''}
         onChange={(e) => onChange(e.target.value)}
       />
       {value && <img src={value} alt="preview" className="image-preview" />}
@@ -34,7 +43,7 @@ function ImageInput({ value, onChange, label = 'Image' }) {
   )
 }
 
-// ─── Login ────────────────────────────────────────────────────────────────────
+// ── Login ────────────────────────────────────────────────────────────────────
 function LoginForm({ onLogin }) {
   const [creds, setCreds] = useState({ username: '', password: '' })
   const [error, setError] = useState('')
@@ -74,42 +83,42 @@ function LoginForm({ onLogin }) {
               required
             />
           </div>
-          <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
-            Login
-          </button>
+          <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Login</button>
         </form>
       </div>
     </div>
   )
 }
 
-// ─── Team tab ─────────────────────────────────────────────────────────────────
+// ── Team tab ─────────────────────────────────────────────────────────────────
 function TeamTab() {
-  const { team, setTeam } = useAdmin()
-  const empty = { name: '', role: '', img: '' }
-  const [form, setForm] = useState(null)
+  const { team, addMember, updateMember, removeMember } = useAdmin()
+  const [form, setForm]     = useState(null)
+  const [saving, setSaving] = useState(false)
 
-  const save = () => {
-    if (!form.name.trim()) return
-    if (form.id) {
-      setTeam(team.map((m) => (m.id === form.id ? form : m)))
-    } else {
-      setTeam([...team, { ...form, id: Date.now() }])
-    }
+  const save = async () => {
+    if (!form.name?.trim()) return
+    setSaving(true)
+    const { error } = form.id
+      ? await updateMember(form)
+      : await addMember({ name: form.name, role: form.role, img: form.img })
+    setSaving(false)
+    if (error) { alert('Error: ' + error.message); return }
     setForm(null)
   }
 
-  const remove = (id) => {
-    if (window.confirm('Delete this team member?')) setTeam(team.filter((m) => m.id !== id))
+  const remove = async (id) => {
+    if (!window.confirm('Delete this team member?')) return
+    const { error } = await removeMember(id)
+    if (error) alert('Error: ' + error.message)
   }
 
   return (
     <div>
       <div className="admin-section-header">
         <h2>Team Members</h2>
-        <button className="admin-btn" onClick={() => setForm({ ...empty })}>+ Add Member</button>
+        <button className="admin-btn" onClick={() => setForm({ name: '', role: '', img: '' })}>+ Add Member</button>
       </div>
-
       <div className="admin-list">
         {team.map((member) => (
           <div key={member.id} className="admin-list-item">
@@ -125,7 +134,6 @@ function TeamTab() {
           </div>
         ))}
       </div>
-
       {form !== null && (
         <div className="admin-form-card">
           <h3>{form.id ? 'Edit Member' : 'Add Member'}</h3>
@@ -139,7 +147,7 @@ function TeamTab() {
           </div>
           <ImageInput value={form.img} onChange={(img) => setForm({ ...form, img })} label="Photo" />
           <div className="admin-form-actions">
-            <button className="admin-btn"           onClick={save}>Save</button>
+            <button className="admin-btn"           onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
             <button className="admin-btn-secondary" onClick={() => setForm(null)}>Cancel</button>
           </div>
         </div>
@@ -148,33 +156,35 @@ function TeamTab() {
   )
 }
 
-// ─── Catalogue tab ────────────────────────────────────────────────────────────
+// ── Catalogue tab ─────────────────────────────────────────────────────────────
 function CatalogueTab() {
-  const { projects, setProjects } = useAdmin()
-  const empty = { title: '', img: '' }
-  const [form, setForm] = useState(null)
+  const { projects, addProject, updateProject, removeProject } = useAdmin()
+  const [form, setForm]     = useState(null)
+  const [saving, setSaving] = useState(false)
 
-  const save = () => {
-    if (!form.title.trim() || !form.img) return
-    if (form.id) {
-      setProjects(projects.map((p) => (p.id === form.id ? form : p)))
-    } else {
-      setProjects([...projects, { ...form, id: Date.now() }])
-    }
+  const save = async () => {
+    if (!form.title?.trim() || !form.img) return
+    setSaving(true)
+    const { error } = form.id
+      ? await updateProject(form)
+      : await addProject({ title: form.title, img: form.img })
+    setSaving(false)
+    if (error) { alert('Error: ' + error.message); return }
     setForm(null)
   }
 
-  const remove = (id) => {
-    if (window.confirm('Delete this project?')) setProjects(projects.filter((p) => p.id !== id))
+  const remove = async (id) => {
+    if (!window.confirm('Delete this project?')) return
+    const { error } = await removeProject(id)
+    if (error) alert('Error: ' + error.message)
   }
 
   return (
     <div>
       <div className="admin-section-header">
         <h2>Catalogue Projects</h2>
-        <button className="admin-btn" onClick={() => setForm({ ...empty })}>+ Add Project</button>
+        <button className="admin-btn" onClick={() => setForm({ title: '', img: '' })}>+ Add Project</button>
       </div>
-
       <div className="admin-catalogue-grid">
         {projects.map((project) => (
           <div key={project.id} className="admin-catalogue-item">
@@ -187,7 +197,6 @@ function CatalogueTab() {
           </div>
         ))}
       </div>
-
       {form !== null && (
         <div className="admin-form-card">
           <h3>{form.id ? 'Edit Project' : 'Add Project'}</h3>
@@ -197,7 +206,7 @@ function CatalogueTab() {
           </div>
           <ImageInput value={form.img} onChange={(img) => setForm({ ...form, img })} label="Image" />
           <div className="admin-form-actions">
-            <button className="admin-btn"           onClick={save}>Save</button>
+            <button className="admin-btn"           onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
             <button className="admin-btn-secondary" onClick={() => setForm(null)}>Cancel</button>
           </div>
         </div>
@@ -206,33 +215,35 @@ function CatalogueTab() {
   )
 }
 
-// ─── FAQ tab ──────────────────────────────────────────────────────────────────
+// ── FAQ tab ───────────────────────────────────────────────────────────────────
 function FaqTab() {
-  const { faqs, setFaqs } = useAdmin()
-  const empty = { q: '', a: '' }
-  const [form, setForm] = useState(null)
+  const { faqs, addFaq, updateFaq, removeFaq } = useAdmin()
+  const [form, setForm]     = useState(null)
+  const [saving, setSaving] = useState(false)
 
-  const save = () => {
-    if (!form.q.trim() || !form.a.trim()) return
-    if (form.id) {
-      setFaqs(faqs.map((f) => (f.id === form.id ? form : f)))
-    } else {
-      setFaqs([...faqs, { ...form, id: Date.now() }])
-    }
+  const save = async () => {
+    if (!form.q?.trim() || !form.a?.trim()) return
+    setSaving(true)
+    const { error } = form.id
+      ? await updateFaq(form)
+      : await addFaq({ q: form.q, a: form.a })
+    setSaving(false)
+    if (error) { alert('Error: ' + error.message); return }
     setForm(null)
   }
 
-  const remove = (id) => {
-    if (window.confirm('Delete this FAQ item?')) setFaqs(faqs.filter((f) => f.id !== id))
+  const remove = async (id) => {
+    if (!window.confirm('Delete this FAQ item?')) return
+    const { error } = await removeFaq(id)
+    if (error) alert('Error: ' + error.message)
   }
 
   return (
     <div>
       <div className="admin-section-header">
         <h2>FAQ</h2>
-        <button className="admin-btn" onClick={() => setForm({ ...empty })}>+ Add FAQ</button>
+        <button className="admin-btn" onClick={() => setForm({ q: '', a: '' })}>+ Add FAQ</button>
       </div>
-
       <div className="admin-list">
         {faqs.map((item) => (
           <div key={item.id} className="admin-list-item">
@@ -247,7 +258,6 @@ function FaqTab() {
           </div>
         ))}
       </div>
-
       {form !== null && (
         <div className="admin-form-card">
           <h3>{form.id ? 'Edit FAQ' : 'Add FAQ'}</h3>
@@ -265,7 +275,7 @@ function FaqTab() {
             />
           </div>
           <div className="admin-form-actions">
-            <button className="admin-btn"           onClick={save}>Save</button>
+            <button className="admin-btn"           onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
             <button className="admin-btn-secondary" onClick={() => setForm(null)}>Cancel</button>
           </div>
         </div>
@@ -274,27 +284,29 @@ function FaqTab() {
   )
 }
 
-// ─── Settings tab ─────────────────────────────────────────────────────────────
+// ── Settings tab ──────────────────────────────────────────────────────────────
 function SettingsTab() {
-  const { whatsapp, setWhatsapp } = useAdmin()
-  const [value, setValue] = useState(whatsapp)
-  const [saved, setSaved] = useState(false)
+  const { whatsapp, saveWhatsapp } = useAdmin()
+  const [value,  setValue]  = useState(whatsapp)
+  const [saving, setSaving] = useState(false)
+  const [saved,  setSaved]  = useState(false)
 
-  const save = () => {
-    setWhatsapp(value)
+  const save = async () => {
+    setSaving(true)
+    const { error } = await saveWhatsapp(value)
+    setSaving(false)
+    if (error) { alert('Error: ' + error.message); return }
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
 
   return (
     <div>
-      <div className="admin-section-header">
-        <h2>Settings</h2>
-      </div>
+      <div className="admin-section-header"><h2>Settings</h2></div>
       <div className="admin-form-card">
         <h3>WhatsApp Number</h3>
         <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
-          Enter the number in international format without + or spaces (e.g. 77013562296)
+          International format, no + or spaces — e.g. 77013562296
         </p>
         {saved && <p className="admin-success">Saved!</p>}
         <div className="form-group">
@@ -306,46 +318,38 @@ function SettingsTab() {
             placeholder="77013562296"
           />
         </div>
-        <button className="admin-btn" onClick={save}>Save</button>
+        <button className="admin-btn" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
       </div>
     </div>
   )
 }
 
-// ─── Main Admin page ──────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function Admin() {
   const [authed, setAuthed] = useState(isAuthed)
-  const [tab, setTab] = useState('team')
-  const navigate = useNavigate()
+  const [tab, setTab]       = useState('team')
+  const navigate            = useNavigate()
 
   if (!authed) {
-    return <LoginForm onLogin={() => { setAuthed(true) }} />
+    return <LoginForm onLogin={() => setAuthed(true)} />
   }
-
-  const tabs = ['team', 'catalogue', 'faq', 'settings']
 
   return (
     <div className="admin-page">
       <div className="admin-header">
         <h1>Admin Panel</h1>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button className="admin-btn-secondary" onClick={() => navigate('/')}>← Back to Site</button>
-          <button className="admin-btn-danger" onClick={() => { clearAuth(); setAuthed(false) }}>Logout</button>
+          <button className="admin-btn-danger"    onClick={() => { clearAuth(); setAuthed(false) }}>Logout</button>
         </div>
       </div>
-
       <div className="admin-tabs">
-        {tabs.map((t) => (
-          <button
-            key={t}
-            className={`admin-tab${tab === t ? ' active' : ''}`}
-            onClick={() => setTab(t)}
-          >
+        {['team', 'catalogue', 'faq', 'settings'].map((t) => (
+          <button key={t} className={`admin-tab${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
-
       <div className="admin-content">
         {tab === 'team'      && <TeamTab />}
         {tab === 'catalogue' && <CatalogueTab />}
