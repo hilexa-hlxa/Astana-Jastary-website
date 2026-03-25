@@ -1,6 +1,18 @@
+import { useNavigate, useLocation } from 'react-router-dom'
 import { imgUrl } from '../lib/imgUrl'
 
 export default function Footer() {
+  const navigate  = useNavigate()
+  const location  = useLocation()
+
+  const goTo = (id) => {
+    if (location.pathname === '/') {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    } else {
+      navigate('/', { state: { scrollTo: id } })
+    }
+  }
+
   return (
     <footer className="footer">
       <div className="container">
@@ -14,15 +26,15 @@ export default function Footer() {
           </div>
           <div className="footer-links">
             <ul>
-              <li><a href="/">Home</a></li>
-              <li><a href="/catalogue">Catalogue</a></li>
-              <li><a href="#form">Join Us</a></li>
-              <li><a href="#contacts">Contacts</a></li>
-              <li><a href="#faq">FAQ</a></li>
+              <li><button onClick={() => goTo('hero')}>Home</button></li>
+              <li><button onClick={() => navigate('/catalogue')}>Catalogue</button></li>
+              <li><button onClick={() => goTo('form')}>Join Us</button></li>
+              <li><button onClick={() => goTo('contacts')}>Contacts</button></li>
+              <li><button onClick={() => goTo('faq')}>FAQ</button></li>
             </ul>
           </div>
           <div className="footer-social">
-            <a href="https://wa.me/87058123056"        target="_blank" rel="noreferrer" className="social-link">Связаться в Whatsapp</a>
+            <a href="https://wa.me/87058123056"            target="_blank" rel="noreferrer" className="social-link">Связаться в Whatsapp</a>
             <a href="https://instagram.com/astana_jastary" target="_blank" rel="noreferrer" className="social-link">Связаться в Instagram</a>
           </div>
         </div>

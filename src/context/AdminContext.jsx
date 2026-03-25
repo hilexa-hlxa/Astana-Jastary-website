@@ -28,16 +28,19 @@ export function AdminProvider({ children }) {
     fetchAll()
   }, [])
 
+  // Strip id from payload — 'generated always as identity' columns can't be updated
+  const strip = ({ id, ...fields }) => fields
+
   // ── Team ──────────────────────────────────────────────────────────────────
   const addMember = async (data) => {
     const { data: row, error } = await supabase
-      .from('team').insert({ ...data, sort_order: team.length + 1 }).select().single()
+      .from('team').insert({ ...strip(data), sort_order: team.length + 1 }).select().single()
     if (!error) setTeam([...team, row])
     return { error }
   }
 
   const updateMember = async (data) => {
-    const { error } = await supabase.from('team').update(data).eq('id', data.id)
+    const { error } = await supabase.from('team').update(strip(data)).eq('id', data.id)
     if (!error) setTeam(team.map((m) => (m.id === data.id ? data : m)))
     return { error }
   }
@@ -51,13 +54,13 @@ export function AdminProvider({ children }) {
   // ── Projects ──────────────────────────────────────────────────────────────
   const addProject = async (data) => {
     const { data: row, error } = await supabase
-      .from('projects').insert({ ...data, sort_order: projects.length + 1 }).select().single()
+      .from('projects').insert({ ...strip(data), sort_order: projects.length + 1 }).select().single()
     if (!error) setProjects([...projects, row])
     return { error }
   }
 
   const updateProject = async (data) => {
-    const { error } = await supabase.from('projects').update(data).eq('id', data.id)
+    const { error } = await supabase.from('projects').update(strip(data)).eq('id', data.id)
     if (!error) setProjects(projects.map((p) => (p.id === data.id ? data : p)))
     return { error }
   }
@@ -71,13 +74,13 @@ export function AdminProvider({ children }) {
   // ── FAQs ──────────────────────────────────────────────────────────────────
   const addFaq = async (data) => {
     const { data: row, error } = await supabase
-      .from('faqs').insert({ ...data, sort_order: faqs.length + 1 }).select().single()
+      .from('faqs').insert({ ...strip(data), sort_order: faqs.length + 1 }).select().single()
     if (!error) setFaqs([...faqs, row])
     return { error }
   }
 
   const updateFaq = async (data) => {
-    const { error } = await supabase.from('faqs').update(data).eq('id', data.id)
+    const { error } = await supabase.from('faqs').update(strip(data)).eq('id', data.id)
     if (!error) setFaqs(faqs.map((f) => (f.id === data.id ? data : f)))
     return { error }
   }

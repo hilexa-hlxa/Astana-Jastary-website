@@ -436,14 +436,20 @@ body {
     margin-bottom: 0.5rem;
 }
 
-.footer-links a {
+.footer-links a,
+.footer-links button {
     color: white;
     text-decoration: none;
-    transition: color 0.3s;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: inherit;
     cursor: pointer;
+    transition: color 0.3s;
 }
 
-.footer-links a:hover {
+.footer-links a:hover,
+.footer-links button:hover {
     color: #007bff;
 }
 
@@ -860,4 +866,168 @@ body {
     border-radius: 6px;
     padding: 0.75rem 1rem;
     margin-bottom: 1rem;
+}
+
+/* ── Catalogue modal ──────────────────────────────────────────────────────── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 1rem;
+    animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.modal {
+    background: white;
+    border-radius: 16px;
+    max-width: 580px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modal-img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 16px 16px 0 0;
+    display: block;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-title {
+    font-size: 1.4rem;
+    margin-bottom: 0.75rem;
+    color: #222;
+}
+
+.modal-description {
+    color: #555;
+    line-height: 1.75;
+    font-size: 1rem;
+}
+
+.modal-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: rgba(0, 0, 0, 0.45);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* ── Admin form modal ─────────────────────────────────────────────────────── */
+.modal .amodal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #f0f2f5;
+}
+
+.modal .amodal-header h3 {
+    font-size: 1.15rem;
+    color: #333;
+}
+
+.amodal-close {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: #888;
+    line-height: 1;
+    padding: 4px;
+}
+
+.amodal-close:hover { color: #333; }
+
+.modal .amodal-body {
+    padding: 1.5rem;
+}
+
+.modal .amodal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f0f2f5;
+}
+
+/* ── Admin team cards ─────────────────────────────────────────────────────── */
+.acard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.acard {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s;
+}
+
+.acard:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.acard-photo {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.acard-body {
+    padding: 0.85rem 1rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex: 1;
+}
+
+.acard-body strong { color: #222; font-size: 0.95rem; }
+.acard-body span   { color: #777; font-size: 0.85rem; }
+
+.acard-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #f5f5f5;
 }
