@@ -10,7 +10,7 @@ export default function Header() {
   const isHome   = location.pathname === '/'
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 100)
+    const handleScroll = () => setScrolled(window.scrollY > 60)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
@@ -27,10 +27,7 @@ export default function Header() {
   }
 
   return (
-    <header
-      className="header"
-      style={scrolled ? { background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)' } : {}}
-    >
+    <header className={`header${scrolled ? ' scrolled' : ''}`}>
       <nav className="nav">
         <div className="logo">
           <Link to="/">
