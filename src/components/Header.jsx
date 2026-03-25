@@ -7,7 +7,7 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const isHome = location.pathname === '/'
+  const isHome   = location.pathname === '/'
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 100)
@@ -16,7 +16,15 @@ export default function Header() {
   }, [])
 
   const closeMenu = () => setMenuOpen(false)
-  const sectionHref = (id) => isHome ? `#${id}` : `/#${id}`
+
+  const goToSection = (id) => {
+    closeMenu()
+    if (isHome) {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    } else {
+      navigate('/', { state: { scrollTo: id } })
+    }
+  }
 
   return (
     <header
@@ -31,10 +39,18 @@ export default function Header() {
         </div>
 
         <ul className={`nav-menu${menuOpen ? ' active' : ''}`}>
-          <li><Link to="/catalogue" className="nav-link" onClick={closeMenu}>Catalogue</Link></li>
-          <li><a href={sectionHref('about')}    className="nav-link"          onClick={closeMenu}>About Us</a></li>
-          <li><a href={sectionHref('contacts')} className="nav-link"          onClick={closeMenu}>Contacts</a></li>
-          <li><a href={sectionHref('form')}     className="btn btn-secondary" id="skibidi" onClick={closeMenu}>Join Us</a></li>
+          <li>
+            <Link to="/catalogue" className="nav-link" onClick={closeMenu}>Catalogue</Link>
+          </li>
+          <li>
+            <button className="nav-link" onClick={() => goToSection('about')}>About Us</button>
+          </li>
+          <li>
+            <button className="nav-link" onClick={() => goToSection('contacts')}>Contacts</button>
+          </li>
+          <li>
+            <button className="btn btn-secondary" id="skibidi" onClick={() => goToSection('form')}>Join Us</button>
+          </li>
         </ul>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
