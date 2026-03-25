@@ -1,4 +1,5 @@
 import { useAdmin } from '../context/AdminContext'
+import { imgUrl } from '../lib/imgUrl'
 
 export default function About() {
   const { team } = useAdmin()
@@ -10,7 +11,7 @@ export default function About() {
         <div className="team-grid">
           {team.map((member) => (
             <div key={member.id} className="team-member">
-              <img src={member.img} alt={member.name} className="team-photo" />
+              <img src={imgUrl(member.img)} alt={member.name} className="team-photo" />
               <h3>{member.name}</h3>
               <p>{member.role}</p>
             </div>

@@ -1,7 +1,7 @@
+import { imgUrl } from '../lib/imgUrl'
+
 export default function Hero() {
-  const scrollToForm = () => {
-    document.getElementById('form')?.scrollIntoView({ behavior: 'smooth' })
-  }
+  const scrollToForm = () => document.getElementById('form')?.scrollIntoView({ behavior: 'smooth' })
 
   return (
     <section className="hero">
@@ -20,11 +20,7 @@ export default function Hero() {
           </button>
         </div>
         <div className="hero-image">
-          <img
-            src="/images/IMAGE 2025-06-12 17:40:31.jpg"
-            alt="Волонтеры"
-            className="hero-img"
-          />
+          <img src={imgUrl('/images/IMAGE 2025-06-12 17:40:31.jpg')} alt="Волонтеры" className="hero-img" />
         </div>
       </div>
     </section>

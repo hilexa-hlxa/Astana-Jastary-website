@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { imgUrl } from '../lib/imgUrl'
 
 export default function Projects() {
   const navigate = useNavigate()
@@ -9,11 +10,7 @@ export default function Projects() {
         <h2 className="section-title">Наши проекты</h2>
         <div className="projects-flex">
           <div className="projects-image">
-            <img
-              src="/images/PHOTO-2025-06-12-16-32-07.jpg"
-              alt="Проект волонтеров"
-              className="project-img"
-            />
+            <img src={imgUrl('/images/PHOTO-2025-06-12-16-32-07.jpg')} alt="Проект волонтеров" className="project-img" />
           </div>
           <div className="projects-content">
             <p className="projects-description">

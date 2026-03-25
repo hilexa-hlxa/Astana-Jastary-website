@@ -1,4 +1,5 @@
 import { useAdmin } from '../context/AdminContext'
+import { imgUrl } from '../lib/imgUrl'
 import Footer from '../components/Footer'
 
 export default function Catalogue() {
@@ -12,7 +13,7 @@ export default function Catalogue() {
           <div className="catalogue-grid">
             {projects.map((project) => (
               <div key={project.id} className="catalogue-item">
-                <img src={project.img} alt={project.title} loading="lazy" />
+                <img src={imgUrl(project.img)} alt={project.title} loading="lazy" />
               </div>
             ))}
           </div>
