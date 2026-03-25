@@ -6,9 +6,9 @@ import { useAdmin } from '../context/AdminContext'
 // EmailJS credentials — fill these in after setting up emailjs.com
 // See: https://dashboard.emailjs.com/admin
 // ─────────────────────────────────────────────────────────────────────────────
-const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID'   // e.g. 'service_abc123'
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID'  // e.g. 'template_xyz789'
-const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY'   // e.g. 'abcDEFghiJKL'
+const EMAILJS_SERVICE_ID  = 'service_qlt4zzg'
+const EMAILJS_TEMPLATE_ID = 'template_jljdpxj'
+const EMAILJS_PUBLIC_KEY  = 'TP0Hu0aEXEHM74nrn'
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function VolunteerForm() {
